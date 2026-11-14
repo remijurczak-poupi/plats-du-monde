@@ -1,0 +1,1162 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Plats du monde</title>
+<meta name="description" content="Note, photographie et retrouve tous les plats que tu as testés en voyage.">
+<meta name="theme-color" content="#E8512F">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Plats du monde">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  color-scheme:light;
+  --bg:#FFF8F0; --surface:#FFFFFF; --surface-2:#FFF0DD; --ink:#2B1B12; --muted:#9C8572; --line:#F0DCC4;
+  --orange:#E8512F; --orange-deep:#C73815; --lime:#5C8A3A; --grape:#C77D2E; --lemon:#D99A00; --teal:#1C8C7A;
+  --danger:#C73815; --warn:#F2A33D; --good:#5C8A3A;
+  --shadow:0 10px 24px -12px rgba(140,70,40,.35);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#241510; --surface:#32201A; --surface-2:#3D2820; --ink:#FFF3E8; --muted:#D4B9A3; --line:#4A3226;
+    --orange:#FF8259; --orange-deep:#FF6B3D; --lime:#8FC768; --grape:#E0A862; --lemon:#FFD873; --teal:#4FD0BB;
+    --danger:#FF6B6B; --warn:#FFC266; --good:#8FC768;
+    --shadow:0 10px 26px -12px rgba(0,0,0,.6);
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#241510; --surface:#32201A; --surface-2:#3D2820; --ink:#FFF3E8; --muted:#D4B9A3; --line:#4A3226;
+  --orange:#FF8259; --orange-deep:#FF6B3D; --lime:#8FC768; --grape:#E0A862; --lemon:#FFD873; --teal:#4FD0BB;
+  --danger:#FF6B6B; --warn:#FFC266; --good:#8FC768;
+  --shadow:0 10px 26px -12px rgba(0,0,0,.6);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;}
+body{
+  margin:0; background:var(--bg); color:var(--ink);
+  font-family:'Nunito',system-ui,-apple-system,sans-serif;
+  padding-left:max(14px, env(safe-area-inset-left,0px));
+  padding-right:max(14px, env(safe-area-inset-right,0px));
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  overflow-x:hidden;
+}
+h1,h2,h3,.display,button,.btn{font-family:'Fredoka',system-ui,sans-serif;}
+.wrap{max-width:520px;margin:0 auto;padding-bottom:110px;}
+
+header.top{padding:18px 2px 10px;}
+header.top .eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700;}
+header.top h1{margin:2px 0 0;font-size:28px;font-weight:700;color:var(--orange-deep);}
+header.top h1 span{color:var(--ink);}
+
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0;}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:12px 10px;text-align:center;box-shadow:var(--shadow);min-width:0;}
+.stat .num{font-family:'Fredoka';font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--orange-deep);line-height:1.1;}
+.stat .label{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:700;margin-top:2px;}
+
+.view-tabs{display:flex;gap:8px;margin-bottom:12px;}
+.view-tab{
+  flex:1;padding:9px 4px;border-radius:14px;border:2px solid var(--line);background:var(--surface);
+  color:var(--muted);font-weight:700;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;
+  text-align:center;white-space:normal;line-height:1.2;
+}
+.view-tab.active{background:linear-gradient(145deg, var(--orange), var(--orange-deep));color:#fff;border-color:transparent;}
+
+.wish-actions{display:flex;gap:6px;flex-shrink:0;}
+
+.badges-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.badge-chip{
+  background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px 8px;text-align:center;
+  box-shadow:var(--shadow);opacity:.4;filter:grayscale(1);min-width:0;
+}
+.badge-chip.unlocked{opacity:1;filter:none;border-color:transparent;background:linear-gradient(160deg, var(--surface), var(--surface-2));}
+.badge-icon{font-size:26px;margin-bottom:4px;}
+.badge-label{font-size:10.5px;font-weight:700;color:var(--muted);line-height:1.25;}
+.badge-chip.unlocked .badge-label{color:var(--ink);}
+
+.map-box{height:360px;border-radius:18px;overflow:hidden;border:2px solid var(--line);margin-bottom:12px;background:var(--surface-2);}
+.map-box .leaflet-popup-content{font-family:'Nunito',sans-serif;font-size:13px;}
+
+.toolbar{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;}
+.toolbar input[type=text]{flex:1;min-width:120px;}
+.toolbar select{flex:0 0 auto;}
+input[type=text],input[type=number],input[type=date],textarea,select{
+  font:inherit;font-size:15px;padding:10px 12px;border:2px solid var(--line);border-radius:12px;
+  background:var(--surface);color:var(--ink);width:100%;
+}
+input:focus,textarea:focus,select:focus{outline:none;border-color:var(--orange);}
+.field.error input{border-color:var(--danger);}
+
+.count{font-size:12.5px;color:var(--muted);font-weight:700;margin:0 2px 8px;}
+
+.list{display:flex;flex-direction:column;gap:10px;}
+.card{
+  background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:12px;display:flex;gap:12px;
+  box-shadow:var(--shadow);align-items:center;cursor:pointer;min-width:0;
+}
+.card .thumb{width:58px;height:58px;border-radius:14px;background:var(--surface-2);flex-shrink:0;object-fit:cover;display:flex;align-items:center;justify-content:center;font-size:24px;}
+.card .main{flex:1;min-width:0;}
+.card .name{font-weight:800;font-size:15.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.card .brand{font-size:12px;color:var(--muted);font-weight:700;}
+.card .meta{font-size:11.5px;color:var(--muted);margin-top:3px;display:flex;gap:6px;flex-wrap:wrap;}
+.score{
+  flex-shrink:0;width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-family:'Fredoka';font-weight:700;font-size:16px;color:#fff;
+}
+
+.empty{text-align:center;padding:60px 20px;color:var(--muted);}
+.empty .big{font-size:40px;margin-bottom:8px;}
+.empty .display{font-size:18px;color:var(--ink);font-weight:700;margin-bottom:4px;}
+
+/* FAB */
+.fab{
+  position:fixed; right:calc(20px + env(safe-area-inset-right,0px)); bottom:calc(22px + env(safe-area-inset-bottom,0px));
+  width:62px;height:62px;border-radius:50%;border:none;cursor:pointer;
+  background:linear-gradient(145deg, var(--orange), var(--orange-deep));
+  color:#fff; font-size:30px; box-shadow:0 12px 26px -8px rgba(199,56,21,.6);
+  display:flex;align-items:center;justify-content:center; z-index:40;
+}
+.fab:active{transform:scale(.94);}
+
+/* sheet */
+.sheet-overlay{position:fixed;inset:0;background:rgba(20,10,30,.45);z-index:50;display:flex;align-items:flex-end;}
+.sheet-overlay[hidden]{display:none;}
+.sheet{
+  background:var(--bg); width:100%; max-height:92vh; overflow-y:auto; border-radius:24px 24px 0 0;
+  padding:16px max(16px, env(safe-area-inset-left,0px)) calc(24px + env(safe-area-inset-bottom,0px)) max(16px, env(safe-area-inset-right,0px));
+  box-shadow:0 -10px 30px rgba(0,0,0,.2);
+}
+.sheet-handle{width:40px;height:5px;border-radius:3px;background:var(--line);margin:0 auto 12px;}
+.sheet-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.sheet-head h2{margin:0;font-size:20px;font-weight:700;}
+.icon-btn{background:var(--surface-2);border:none;width:34px;height:34px;border-radius:50%;font-size:16px;cursor:pointer;color:var(--ink);display:flex;align-items:center;justify-content:center;}
+
+.field{display:flex;flex-direction:column;gap:5px;margin-bottom:12px;min-width:0;}
+.field label{font-size:12.5px;color:var(--muted);font-weight:800;text-transform:uppercase;letter-spacing:.03em;}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+
+.photos{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px;}
+.photo-thumb{position:relative;width:72px;height:72px;border-radius:14px;overflow:hidden;background:var(--surface-2);}
+.photo-thumb img{width:100%;height:100%;object-fit:cover;}
+.photo-thumb button{position:absolute;top:2px;right:2px;background:rgba(0,0,0,.55);color:#fff;border:none;border-radius:50%;width:20px;height:20px;font-size:12px;line-height:1;cursor:pointer;}
+.add-photo{
+  width:72px;height:72px;border-radius:14px;border:2px dashed var(--line);background:none;color:var(--muted);
+  font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;
+}
+
+.rating-wrap{background:var(--surface);border:2px solid var(--line);border-radius:16px;padding:14px;}
+.rating-value{text-align:center;font-family:'Fredoka';font-weight:700;font-size:34px;margin-bottom:6px;}
+input[type=range]{width:100%;accent-color:var(--orange-deep);height:8px;}
+
+.actions{display:flex;gap:10px;margin-top:16px;}
+.btn{flex:1;padding:14px;border-radius:14px;border:none;font-weight:700;font-size:15px;cursor:pointer;}
+.btn-primary{background:linear-gradient(145deg, var(--orange), var(--orange-deep));color:#fff;}
+.btn-ghost{background:var(--surface-2);color:var(--ink);}
+.btn-danger{background:none;color:var(--danger);font-weight:700;}
+
+.account-row{display:flex;align-items:center;gap:8px;margin-bottom:12px;}
+.btn-account{
+  flex:1;padding:10px 14px;border-radius:14px;border:2px solid var(--teal);background:color-mix(in srgb, var(--teal) 10%, transparent);
+  color:var(--teal);font-weight:700;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;
+}
+.account-signed{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:6px 10px;flex:1;min-width:0;}
+.account-avatar{width:26px;height:26px;border-radius:50%;flex-shrink:0;background:var(--surface-2);}
+.account-signed span{flex:1;font-size:12px;font-weight:700;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;}
+
+.install-banner{
+  display:none; align-items:center; gap:10px; background:var(--surface); border:2px solid var(--teal);
+  border-radius:16px; padding:10px 12px; margin-bottom:14px; box-shadow:var(--shadow);
+}
+.install-banner.show{display:flex;}
+.install-banner .txt{flex:1;font-size:12.5px;font-weight:700;color:var(--ink);}
+.install-banner button{background:var(--teal);color:#fff;border:none;border-radius:10px;padding:8px 12px;font-weight:700;font-size:12.5px;}
+
+textarea{min-height:60px;resize:vertical;}
+[hidden]{display:none!important;}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="top">
+    <div class="eyebrow">Journal de voyage</div>
+    <h1>🍽️ Plats du <span>Monde</span></h1>
+  </header>
+
+  <div class="account-row" id="accountRow">
+    <button type="button" class="btn-account" id="signInBtn">🔐 Sauvegarder dans le cloud (Google)</button>
+    <div class="account-signed" id="accountSigned" hidden>
+      <img id="accountAvatar" class="account-avatar" alt="">
+      <span id="accountEmail"></span>
+      <button type="button" class="icon-btn" id="signOutBtn" title="Déconnexion">⎋</button>
+    </div>
+  </div>
+
+  <div class="install-banner" id="installBanner">
+    <div class="txt" id="installTxt">Installe l'app sur ton téléphone pour l'ouvrir en un tap.</div>
+    <button id="installBtn" type="button">Installer</button>
+  </div>
+
+  <div class="stats" id="stats"></div>
+
+  <div class="view-tabs" id="viewTabs">
+    <button type="button" class="view-tab active" data-view="list">📋 Liste</button>
+    <button type="button" class="view-tab" data-view="map">🗺️ Carte</button>
+    <button type="button" class="view-tab" data-view="wishlist">⭐ À tester</button>
+    <button type="button" class="view-tab" data-view="badges">🏅 Badges</button>
+  </div>
+
+  <div class="toolbar" id="toolbar">
+    <input type="text" id="search" placeholder="Rechercher...">
+    <select id="filterPays">
+      <option value="">Tous les pays</option>
+    </select>
+    <select id="sortBy">
+      <option value="date-desc">Plus récent</option>
+      <option value="date-asc">Plus ancien</option>
+      <option value="rating-desc">Mieux noté</option>
+      <option value="rating-asc">Moins bien noté</option>
+      <option value="name-asc">Nom (A–Z)</option>
+    </select>
+  </div>
+  <div class="count" id="count"></div>
+  <div class="list" id="list"></div>
+
+  <div id="mapViewWrap" hidden>
+    <div class="map-box" id="mapContainer"></div>
+    <div class="count" id="mapCount"></div>
+    <div class="list" id="mapPlaces"></div>
+  </div>
+
+  <div id="wishViewWrap" hidden>
+    <div class="count" id="wishCount"></div>
+    <div class="list" id="wishList"></div>
+  </div>
+
+  <div id="badgesViewWrap" hidden>
+    <div class="count" id="badgesCount"></div>
+    <div class="badges-grid" id="badgesGrid"></div>
+  </div>
+</div>
+
+<button class="fab" id="fabAdd" type="button" aria-label="Ajouter un plat">+</button>
+
+<div class="sheet-overlay" id="sheetOverlay" hidden>
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head">
+      <h2 id="sheetTitle">Nouveau plat</h2>
+      <button class="icon-btn" id="sheetClose" type="button" aria-label="Fermer">✕</button>
+    </div>
+
+    <form id="dishForm">
+      <div class="field">
+        <label>Photos</label>
+        <div class="photos" id="photosRow"></div>
+        <input type="file" id="photoInput" accept="image/*" capture="environment" multiple hidden>
+        <input type="file" id="photoInputGallery" accept="image/*" multiple hidden>
+      </div>
+
+      <div class="field" id="nameField">
+        <label for="f-name">Nom du plat</label>
+        <input type="text" id="f-name" placeholder="Ex. Pad Thaï, Tacos al pastor…">
+        <div id="nameError" style="display:none;color:var(--danger);font-size:12px;font-weight:700;">Donne un nom à ce plat avant d'enregistrer.</div>
+      </div>
+
+      <div class="row2">
+        <div class="field">
+          <label for="f-restaurant">Restaurant</label>
+          <input type="text" id="f-restaurant" placeholder="Ex. Street food chez Nid">
+        </div>
+        <div class="field">
+          <label for="f-prix">Prix (€)</label>
+          <input type="number" id="f-prix" min="0" step="0.5" placeholder="Ex. 8">
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Note</label>
+        <div class="rating-wrap">
+          <div class="rating-value" id="ratingValue">–</div>
+          <input type="range" id="f-rating" min="0" max="10" step="0.5" value="7">
+        </div>
+      </div>
+
+      <div class="row2">
+        <div class="field">
+          <label for="f-lieu">Lieu (où testé)</label>
+          <input type="text" id="f-lieu" placeholder="Ex. Bangkok, Thaïlande">
+        </div>
+        <div class="field">
+          <label for="f-pays">Pays d'origine</label>
+          <input type="text" id="f-pays" placeholder="Ex. Thaïlande">
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="f-date">Date</label>
+        <input type="date" id="f-date">
+      </div>
+
+      <div class="field">
+        <label for="f-note">Notes</label>
+        <textarea id="f-note" placeholder="Goût, épices, avec qui…"></textarea>
+      </div>
+
+      <div class="actions">
+        <button type="button" class="btn btn-danger" id="deleteBtn" hidden>Supprimer</button>
+        <button type="submit" class="btn btn-primary" id="submitBtn">Ajouter</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="sheet-overlay" id="wishSheetOverlay" hidden>
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head">
+      <h2>Ajouter une envie</h2>
+      <button class="icon-btn" id="wishSheetClose" type="button" aria-label="Fermer">✕</button>
+    </div>
+    <form id="wishForm">
+      <div class="field" id="wishNameField">
+        <label for="w-name">Nom du plat</label>
+        <input type="text" id="w-name" placeholder="Ex. Ceviche">
+        <div id="wishNameError" style="display:none;color:var(--danger);font-size:12px;font-weight:700;">Donne un nom avant d'ajouter.</div>
+      </div>
+      <div class="field">
+        <label for="w-restaurant">Restaurant (optionnel)</label>
+        <input type="text" id="w-restaurant" placeholder="Ex. Vu sur Instagram">
+      </div>
+      <div class="field">
+        <label for="w-note">Pourquoi tu veux le tester ? (optionnel)</label>
+        <textarea id="w-note" placeholder="Vu chez..., recommandé par..."></textarea>
+      </div>
+      <div class="actions">
+        <button type="submit" class="btn btn-primary" style="flex:1;">Ajouter à ma liste</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+  getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import {
+  initializeFirestore, persistentLocalCache, collection, doc, setDoc, deleteDoc, getDocs, onSnapshot, writeBatch
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+(function(){
+  /* ---------- Cloud (Firebase) — même projet que Boissons du monde ---------- */
+  var firebaseConfig = {
+    apiKey: "AIzaSyAd0iSUlyiNUnAsdbG0F7G2A4-FuJ69hKI",
+    authDomain: "carnet-sodas.firebaseapp.com",
+    projectId: "carnet-sodas",
+    storageBucket: "carnet-sodas.firebasestorage.app",
+    messagingSenderId: "278909625015",
+    appId: "1:278909625015:web:c1e4711e13c761e6656332"
+  };
+  var fbApp = initializeApp(firebaseConfig);
+  var auth = getAuth(fbApp);
+  var db = initializeFirestore(fbApp, { localCache: persistentLocalCache() });
+  var currentUser = null;
+  var unsubDishes = null, unsubWishlist = null;
+
+  function dishesCol(){ return collection(db, 'users', currentUser.uid, 'dishes'); }
+  function wishCol(){ return collection(db, 'users', currentUser.uid, 'dishWishlist'); }
+
+  function attachCloudListeners(){
+    unsubDishes = onSnapshot(dishesCol(), function(snap){
+      dishes = snap.docs.map(function(d){ return d.data(); });
+      save();
+      render();
+    });
+    unsubWishlist = onSnapshot(wishCol(), function(snap){
+      wishlist = snap.docs.map(function(d){ return d.data(); });
+      saveWishlist();
+      render();
+    });
+  }
+  function detachCloudListeners(){
+    if(unsubDishes){ unsubDishes(); unsubDishes = null; }
+    if(unsubWishlist){ unsubWishlist(); unsubWishlist = null; }
+  }
+  function mergeLocalIntoCloud(){
+    return Promise.all([getDocs(dishesCol()), getDocs(wishCol())]).then(function(results){
+      var cloudIds = {}, cloudWishIds = {};
+      results[0].forEach(function(d){ cloudIds[d.id] = true; });
+      results[1].forEach(function(d){ cloudWishIds[d.id] = true; });
+      var batch = writeBatch(db);
+      var any = false;
+      dishes.forEach(function(d){ if(!cloudIds[d.id]){ batch.set(doc(dishesCol(), d.id), d); any = true; } });
+      wishlist.forEach(function(w){ if(!cloudWishIds[w.id]){ batch.set(doc(wishCol(), w.id), w); any = true; } });
+      return any ? batch.commit() : Promise.resolve();
+    });
+  }
+
+  onAuthStateChanged(auth, function(user){
+    currentUser = user;
+    var signInBtn = document.getElementById('signInBtn');
+    var signedBox = document.getElementById('accountSigned');
+    if(user){
+      signInBtn.hidden = true;
+      signedBox.hidden = false;
+      document.getElementById('accountEmail').textContent = user.email || '';
+      document.getElementById('accountAvatar').src = user.photoURL || '';
+      mergeLocalIntoCloud().catch(function(e){ console.error('Fusion cloud échouée', e); })
+        .then(function(){ attachCloudListeners(); });
+    } else {
+      detachCloudListeners();
+      signInBtn.hidden = false;
+      signedBox.hidden = true;
+    }
+  });
+  getRedirectResult(auth).catch(function(e){ console.error('Connexion (retour redirection) échouée', e); });
+
+  var AUTH_PENDING_KEY = 'platsAuthPending';
+  document.addEventListener('visibilitychange', function(){
+    if(document.visibilityState === 'visible' && sessionStorage.getItem(AUTH_PENDING_KEY)){
+      sessionStorage.removeItem(AUTH_PENDING_KEY);
+      location.reload();
+    }
+  });
+
+  function startGoogleSignIn(){
+    var provider = new GoogleAuthProvider();
+    var isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+    sessionStorage.setItem(AUTH_PENDING_KEY, '1');
+    if(isStandalone){
+      signInWithRedirect(auth, provider).catch(function(e){
+        sessionStorage.removeItem(AUTH_PENDING_KEY);
+        console.error('Connexion (redirection) échouée', e);
+        alert('Connexion impossible : ' + (e && e.message ? e.message : 'erreur inconnue'));
+      });
+      return;
+    }
+    signInWithPopup(auth, provider).catch(function(e){
+      console.error('Connexion (popup) échouée', e);
+      if(e && e.code === 'auth/popup-closed-by-user'){ sessionStorage.removeItem(AUTH_PENDING_KEY); return; }
+      if(e && (e.code === 'auth/popup-blocked' || e.code === 'auth/operation-not-supported-in-this-environment' || e.code === 'auth/cancelled-popup-request')){
+        signInWithRedirect(auth, provider).catch(function(e2){
+          sessionStorage.removeItem(AUTH_PENDING_KEY);
+          console.error('Connexion (redirection) échouée', e2);
+        });
+      } else {
+        sessionStorage.removeItem(AUTH_PENDING_KEY);
+        alert('Connexion impossible : ' + (e && e.message ? e.message : 'erreur inconnue'));
+      }
+    });
+  }
+  document.getElementById('signInBtn').addEventListener('click', startGoogleSignIn);
+  document.getElementById('signOutBtn').addEventListener('click', function(){
+    signOut(auth);
+  });
+
+  function upsertDish(entry){
+    var idx = dishes.findIndex(function(d){ return d.id === entry.id; });
+    if(idx > -1) dishes[idx] = entry; else dishes.unshift(entry);
+    save();
+    if(currentUser){
+      setDoc(doc(dishesCol(), entry.id), entry).catch(function(e){
+        console.error('Sync échouée', e);
+        alert("La sauvegarde cloud a échoué pour ce plat (peut-être trop de photos). Il reste enregistré sur ce téléphone.");
+      });
+    }
+  }
+  function removeDish(id){
+    dishes = dishes.filter(function(d){ return d.id !== id; });
+    save();
+    if(currentUser){
+      deleteDoc(doc(dishesCol(), id)).catch(function(e){ console.error('Sync échouée', e); });
+    }
+  }
+  function upsertWish(item){
+    var idx = wishlist.findIndex(function(w){ return w.id === item.id; });
+    if(idx > -1) wishlist[idx] = item; else wishlist.unshift(item);
+    saveWishlist();
+    if(currentUser){
+      setDoc(doc(wishCol(), item.id), item).catch(function(e){ console.error('Sync échouée', e); });
+    }
+  }
+  function removeWish(id){
+    wishlist = wishlist.filter(function(w){ return w.id !== id; });
+    saveWishlist();
+    if(currentUser){
+      deleteDoc(doc(wishCol(), id)).catch(function(e){ console.error('Sync échouée', e); });
+    }
+  }
+
+  var STORAGE_KEY = 'plats-du-monde-v1';
+  var GEOCACHE_KEY = 'plats-du-monde-geocache-v1';
+  var WISHLIST_KEY = 'plats-du-monde-wishlist-v1';
+  var dishes = [];
+  var geocache = {};
+  var wishlist = [];
+  var editingId = null;
+  var convertingWishId = null;
+  var pendingPhotos = [];
+  var currentView = 'list';
+
+  function load(){
+    try{
+      var raw = localStorage.getItem(STORAGE_KEY);
+      dishes = raw ? JSON.parse(raw) : seed();
+    }catch(e){ dishes = seed(); }
+    try{
+      geocache = JSON.parse(localStorage.getItem(GEOCACHE_KEY)) || {};
+    }catch(e){ geocache = {}; }
+    try{
+      wishlist = JSON.parse(localStorage.getItem(WISHLIST_KEY)) || [];
+    }catch(e){ wishlist = []; }
+  }
+  function save(){
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(dishes)); }
+    catch(e){ alert("Stockage plein : essaie de supprimer d'anciennes photos ou entrées."); }
+  }
+  function saveGeocache(){
+    try{ localStorage.setItem(GEOCACHE_KEY, JSON.stringify(geocache)); }catch(e){}
+  }
+  function saveWishlist(){
+    try{ localStorage.setItem(WISHLIST_KEY, JSON.stringify(wishlist)); }catch(e){}
+  }
+  function seed(){
+    var today = new Date().toISOString().slice(0,10);
+    return [{
+      id:'p1', name:'Pad Thaï (exemple)', restaurant:'Street food Bangkok',
+      rating:8, lieu:'Bangkok, Thaïlande', pays:'Thaïlande', prix:3.5, date:today,
+      note:"Exemple — modifie ou supprime cette entrée.", photos:[]
+    }];
+  }
+  function uid(){ return 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+
+  /* ---------- Photos ---------- */
+  function resizeImage(file, maxDim, quality){
+    return new Promise(function(resolve, reject){
+      var img = new Image();
+      var reader = new FileReader();
+      reader.onload = function(e){
+        img.onload = function(){
+          var w = img.width, h = img.height;
+          if(w > h && w > maxDim){ h = Math.round(h * maxDim/w); w = maxDim; }
+          else if(h > maxDim){ w = Math.round(w * maxDim/h); h = maxDim; }
+          var c = document.createElement('canvas');
+          c.width = w; c.height = h;
+          c.getContext('2d').drawImage(img, 0, 0, w, h);
+          resolve(c.toDataURL('image/jpeg', quality));
+        };
+        img.onerror = reject;
+        img.src = e.target.result;
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function handlePhotoFiles(fileList){
+    var files = Array.prototype.slice.call(fileList || []);
+    if(!files.length) return;
+    Promise.all(files.map(function(f){ return resizeImage(f, 900, 0.72); }))
+      .then(function(dataUrls){
+        pendingPhotos = pendingPhotos.concat(dataUrls);
+        renderPhotosRow();
+      });
+  }
+  document.getElementById('photoInput').addEventListener('change', function(e){
+    handlePhotoFiles(e.target.files);
+    e.target.value = '';
+  });
+  document.getElementById('photoInputGallery').addEventListener('change', function(e){
+    handlePhotoFiles(e.target.files);
+    e.target.value = '';
+  });
+
+  function renderPhotosRow(){
+    var row = document.getElementById('photosRow');
+    row.innerHTML = pendingPhotos.map(function(src, i){
+      return '<div class="photo-thumb"><img src="'+src+'"><button type="button" data-i="'+i+'">✕</button></div>';
+    }).join('') +
+      '<button type="button" class="add-photo" id="addPhotoCameraBtn" title="Prendre une photo">📷</button>' +
+      '<button type="button" class="add-photo" id="addPhotoGalleryBtn" title="Choisir depuis la galerie">🖼️</button>';
+    document.getElementById('addPhotoCameraBtn').addEventListener('click', function(){
+      document.getElementById('photoInput').click();
+    });
+    document.getElementById('addPhotoGalleryBtn').addEventListener('click', function(){
+      document.getElementById('photoInputGallery').click();
+    });
+    Array.prototype.forEach.call(row.querySelectorAll('.photo-thumb button'), function(btn){
+      btn.addEventListener('click', function(){
+        pendingPhotos.splice(parseInt(btn.dataset.i,10), 1);
+        renderPhotosRow();
+      });
+    });
+  }
+
+  /* ---------- Rating slider ---------- */
+  document.getElementById('f-name').addEventListener('input', function(){
+    document.getElementById('nameField').classList.remove('error');
+    document.getElementById('nameError').style.display = 'none';
+  });
+
+  var ratingInput = document.getElementById('f-rating');
+  var ratingValue = document.getElementById('ratingValue');
+  function syncRatingDisplay(){
+    var v = parseFloat(ratingInput.value);
+    ratingValue.textContent = v.toFixed(1).replace('.0','') + ' / 10';
+    ratingValue.style.color = scoreColor(v*10);
+  }
+  ratingInput.addEventListener('input', syncRatingDisplay);
+
+  function scoreColor(pct){ // pct 0-100
+    if(pct >= 75) return 'var(--good)';
+    if(pct >= 50) return 'var(--lime)';
+    if(pct >= 25) return 'var(--warn)';
+    return 'var(--danger)';
+  }
+
+  /* ---------- Sheet open/close ---------- */
+  var overlay = document.getElementById('sheetOverlay');
+  document.getElementById('fabAdd').addEventListener('click', function(){
+    if(currentView === 'wishlist') openWishSheet(); else openSheet(null);
+  });
+  document.getElementById('sheetClose').addEventListener('click', closeSheet);
+  overlay.addEventListener('click', function(e){ if(e.target === overlay) closeSheet(); });
+
+  function openSheet(id){
+    editingId = id;
+    convertingWishId = null;
+    pendingPhotos = [];
+    isSubmitting = false;
+    document.getElementById('dishForm').reset();
+    document.getElementById('f-date').value = new Date().toISOString().slice(0,10);
+    ratingInput.value = 7; syncRatingDisplay();
+    document.getElementById('nameField').classList.remove('error');
+    document.getElementById('nameError').style.display = 'none';
+
+    if(id){
+      var d = dishes.find(function(x){ return x.id === id; });
+      document.getElementById('sheetTitle').textContent = 'Modifier le plat';
+      document.getElementById('submitBtn').textContent = 'Enregistrer';
+      document.getElementById('deleteBtn').hidden = false;
+      document.getElementById('f-name').value = d.name;
+      document.getElementById('f-restaurant').value = d.restaurant || '';
+      ratingInput.value = d.rating; syncRatingDisplay();
+      document.getElementById('f-lieu').value = d.lieu || '';
+      document.getElementById('f-pays').value = d.pays || '';
+      document.getElementById('f-prix').value = d.prix ?? '';
+      document.getElementById('f-date').value = d.date || new Date().toISOString().slice(0,10);
+      document.getElementById('f-note').value = d.note || '';
+      pendingPhotos = (d.photos || []).slice();
+    } else {
+      document.getElementById('sheetTitle').textContent = 'Nouveau plat';
+      document.getElementById('submitBtn').textContent = 'Ajouter';
+      document.getElementById('deleteBtn').hidden = true;
+    }
+    renderPhotosRow();
+    overlay.hidden = false;
+  }
+  function closeSheet(){
+    overlay.hidden = true;
+  }
+  function openSheetFromWish(id){
+    var w = wishlist.find(function(x){ return x.id === id; });
+    if(!w) return;
+    openSheet(null);
+    convertingWishId = id;
+    document.getElementById('sheetTitle').textContent = 'Tu l\'as testé !';
+    document.getElementById('f-name').value = w.name;
+    document.getElementById('f-restaurant').value = w.restaurant || '';
+  }
+
+  document.getElementById('deleteBtn').addEventListener('click', function(){
+    if(!editingId) return;
+    if(confirm('Supprimer ce plat ?')){
+      removeDish(editingId);
+      closeSheet(); render();
+    }
+  });
+
+  var isSubmitting = false;
+  document.getElementById('dishForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    if(isSubmitting) return;
+    var nameInput = document.getElementById('f-name');
+    var nameField = document.getElementById('nameField');
+    var name = nameInput.value.trim();
+    if(!name){
+      nameField.classList.add('error');
+      document.getElementById('nameError').style.display = 'block';
+      nameField.scrollIntoView({behavior:'smooth', block:'center'});
+      nameInput.focus();
+      return;
+    }
+    nameField.classList.remove('error');
+    document.getElementById('nameError').style.display = 'none';
+    isSubmitting = true;
+    var entry = {
+      id: editingId || uid(),
+      name: name,
+      restaurant: document.getElementById('f-restaurant').value.trim(),
+      rating: parseFloat(ratingInput.value),
+      lieu: document.getElementById('f-lieu').value.trim(),
+      pays: document.getElementById('f-pays').value.trim(),
+      prix: document.getElementById('f-prix').value ? parseFloat(document.getElementById('f-prix').value) : null,
+      date: document.getElementById('f-date').value || new Date().toISOString().slice(0,10),
+      note: document.getElementById('f-note').value.trim(),
+      photos: pendingPhotos.slice()
+    };
+    upsertDish(entry);
+    if(!editingId && convertingWishId){
+      removeWish(convertingWishId);
+      convertingWishId = null;
+    }
+    closeSheet();
+    render();
+  });
+
+  /* ---------- Wishlist ("À tester") ---------- */
+  var wishOverlay = document.getElementById('wishSheetOverlay');
+  document.getElementById('wishSheetClose').addEventListener('click', closeWishSheet);
+  wishOverlay.addEventListener('click', function(e){ if(e.target === wishOverlay) closeWishSheet(); });
+
+  function openWishSheet(){
+    document.getElementById('wishForm').reset();
+    document.getElementById('wishNameField').classList.remove('error');
+    document.getElementById('wishNameError').style.display = 'none';
+    wishIsSubmitting = false;
+    wishOverlay.hidden = false;
+  }
+  function closeWishSheet(){
+    wishOverlay.hidden = true;
+  }
+
+  var wishIsSubmitting = false;
+  document.getElementById('wishForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    if(wishIsSubmitting) return;
+    var nameInput = document.getElementById('w-name');
+    var nameField = document.getElementById('wishNameField');
+    var name = nameInput.value.trim();
+    if(!name){
+      nameField.classList.add('error');
+      document.getElementById('wishNameError').style.display = 'block';
+      nameInput.focus();
+      return;
+    }
+    nameField.classList.remove('error');
+    document.getElementById('wishNameError').style.display = 'none';
+    wishIsSubmitting = true;
+    upsertWish({
+      id: uid(),
+      name: name,
+      restaurant: document.getElementById('w-restaurant').value.trim(),
+      note: document.getElementById('w-note').value.trim(),
+      date: new Date().toISOString().slice(0,10)
+    });
+    closeWishSheet();
+    renderWishlist();
+  });
+
+  function renderWishlist(){
+    var el = document.getElementById('wishList');
+    document.getElementById('wishCount').textContent =
+      wishlist.length + (wishlist.length===1 ? ' envie' : ' envies');
+    if(!wishlist.length){
+      el.innerHTML = '<div class="empty"><div class="big">⭐</div><div class="display">Aucune envie pour l\'instant</div>Ajoute un plat que tu veux essayer avec le +.</div>';
+      return;
+    }
+    el.innerHTML = wishlist.map(function(w){
+      return '<div class="card">' +
+        '<div class="thumb">⭐</div>' +
+        '<div class="main">' +
+          '<div class="name">'+escapeHtml(w.name)+'</div>' +
+          (w.restaurant ? '<div class="brand">'+escapeHtml(w.restaurant)+'</div>' : '') +
+          (w.note ? '<div class="meta">'+escapeHtml(w.note)+'</div>' : '') +
+        '</div>' +
+        '<div class="wish-actions">' +
+          '<button type="button" class="icon-btn wish-try" data-id="'+w.id+'" title="Je l\'ai testé">✅</button>' +
+          '<button type="button" class="icon-btn wish-del" data-id="'+w.id+'" title="Retirer">✕</button>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+    Array.prototype.forEach.call(el.querySelectorAll('.wish-try'), function(btn){
+      btn.addEventListener('click', function(){ openSheetFromWish(btn.dataset.id); });
+    });
+    Array.prototype.forEach.call(el.querySelectorAll('.wish-del'), function(btn){
+      btn.addEventListener('click', function(){
+        removeWish(btn.dataset.id);
+        renderWishlist();
+      });
+    });
+  }
+
+  /* ---------- Badges ---------- */
+  var BADGES = [
+    { icon:'🍽️', label:'Premier plat', check: function(s){ return s.total >= 1; } },
+    { icon:'🔟', label:'10 plats testés', check: function(s){ return s.total >= 10; } },
+    { icon:'🥇', label:'50 plats testés', check: function(s){ return s.total >= 50; } },
+    { icon:'📍', label:'5 lieux différents', check: function(s){ return s.places >= 5; } },
+    { icon:'🌍', label:'5 pays différents', check: function(s){ return s.countries >= 5; } },
+    { icon:'🌎', label:'10 pays différents', check: function(s){ return s.countries >= 10; } },
+    { icon:'🍴', label:'5 restaurants différents', check: function(s){ return s.restaurants >= 5; } },
+    { icon:'⭐', label:'Un coup de cœur (10/10)', check: function(s){ return s.hasMaxRating; } },
+    { icon:'📸', label:'10 photos prises', check: function(s){ return s.photoCount >= 10; } },
+    { icon:'🗓️', label:'7 jours de dégustation', check: function(s){ return s.distinctDays >= 7; } },
+    { icon:'🏆', label:'Moyenne ≥ 8 (5 plats min.)', check: function(s){ return s.total >= 5 && s.avg >= 8; } }
+  ];
+
+  function computeStats(){
+    var countries = {}, places = {}, restaurants = {}, days = {};
+    var hasMaxRating = false, photoCount = 0, sumRating = 0;
+    dishes.forEach(function(d){
+      if(d.pays) countries[d.pays.trim().toLowerCase()] = true;
+      if(d.lieu) places[d.lieu.trim().toLowerCase()] = true;
+      if(d.restaurant) restaurants[d.restaurant.trim().toLowerCase()] = true;
+      if(d.date) days[d.date] = true;
+      if(d.rating === 10) hasMaxRating = true;
+      photoCount += (d.photos ? d.photos.length : 0);
+      sumRating += (d.rating || 0);
+    });
+    var total = dishes.length;
+    return {
+      total: total,
+      countries: Object.keys(countries).length,
+      places: Object.keys(places).length,
+      restaurants: Object.keys(restaurants).length,
+      distinctDays: Object.keys(days).length,
+      hasMaxRating: hasMaxRating,
+      photoCount: photoCount,
+      avg: total ? sumRating/total : 0
+    };
+  }
+
+  function renderBadges(){
+    var s = computeStats();
+    var unlocked = 0;
+    var html = BADGES.map(function(b){
+      var ok = b.check(s);
+      if(ok) unlocked++;
+      return '<div class="badge-chip'+(ok?' unlocked':'')+'">' +
+        '<div class="badge-icon">'+b.icon+'</div>' +
+        '<div class="badge-label">'+b.label+'</div>' +
+      '</div>';
+    }).join('');
+    document.getElementById('badgesCount').textContent = unlocked + ' / ' + BADGES.length + ' débloqués';
+    document.getElementById('badgesGrid').innerHTML = html;
+  }
+
+  /* ---------- List rendering ---------- */
+  function renderStats(){
+    var el = document.getElementById('stats');
+    var total = dishes.length;
+    var avg = total ? (dishes.reduce(function(s,d){return s + (d.rating||0);},0) / total) : 0;
+    var countries = {};
+    dishes.forEach(function(d){ if(d.pays) countries[d.pays.trim().toLowerCase()] = true; });
+    el.innerHTML =
+      '<div class="stat"><div class="num">' + total + '</div><div class="label">Plats testés</div></div>' +
+      '<div class="stat"><div class="num">' + (total ? avg.toFixed(1) : '–') + '</div><div class="label">Note moyenne /10</div></div>' +
+      '<div class="stat"><div class="num">' + Object.keys(countries).length + '</div><div class="label">Pays différents</div></div>';
+  }
+
+  function renderPaysFilterOptions(){
+    var sel = document.getElementById('filterPays');
+    var current = sel.value;
+    var countries = {};
+    dishes.forEach(function(d){ if(d.pays) countries[d.pays.trim()] = true; });
+    var list = Object.keys(countries).sort(function(a,b){ return a.localeCompare(b,'fr'); });
+    sel.innerHTML = '<option value="">Tous les pays</option>' + list.map(function(p){
+      return '<option value="'+escapeHtml(p)+'">'+escapeHtml(p)+'</option>';
+    }).join('');
+    if(list.indexOf(current) !== -1) sel.value = current;
+  }
+
+  function getFiltered(){
+    var q = document.getElementById('search').value.trim().toLowerCase();
+    var sort = document.getElementById('sortBy').value;
+    var paysFilter = document.getElementById('filterPays').value;
+    var list = dishes.filter(function(d){
+      if(paysFilter && (d.pays||'') !== paysFilter) return false;
+      if(!q) return true;
+      var hay = (d.name+' '+(d.restaurant||'')+' '+(d.lieu||'')+' '+(d.pays||'')+' '+(d.note||'')).toLowerCase();
+      return hay.indexOf(q) !== -1;
+    });
+    list.sort(function(a,b){
+      switch(sort){
+        case 'date-asc': return a.date.localeCompare(b.date);
+        case 'rating-desc': return (b.rating||0)-(a.rating||0);
+        case 'rating-asc': return (a.rating||0)-(b.rating||0);
+        case 'name-asc': return a.name.localeCompare(b.name,'fr');
+        default: return b.date.localeCompare(a.date);
+      }
+    });
+    return list;
+  }
+
+  function escapeHtml(s){
+    return (s||'').replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; });
+  }
+  function fmtDate(iso){
+    if(!iso) return '';
+    var d = new Date(iso+'T00:00:00');
+    if(isNaN(d)) return iso;
+    return d.toLocaleDateString('fr-FR', {day:'numeric', month:'short'});
+  }
+
+  function render(){
+    renderStats();
+    renderPaysFilterOptions();
+    var list = getFiltered();
+    document.getElementById('count').textContent =
+      list.length + (list.length===1?' plat':' plats') + (dishes.length!==list.length ? ' sur '+dishes.length : '');
+    var container = document.getElementById('list');
+    if(!list.length){
+      container.innerHTML = '<div class="empty"><div class="big">🍽️</div><div class="display">Carnet vide</div>Tape sur + pour ajouter ton premier plat.</div>';
+      return;
+    }
+    container.innerHTML = list.map(function(d){
+      var thumb = d.photos && d.photos[0] ? '<img class="thumb" src="'+d.photos[0]+'">' : '<div class="thumb">🍽️</div>';
+      var scoreBg = scoreColor((d.rating||0)*10);
+      var bits = [];
+      if(d.lieu) bits.push('📍 '+escapeHtml(d.lieu));
+      if(d.pays) bits.push('🌍 '+escapeHtml(d.pays));
+      if(d.prix != null) bits.push(d.prix.toFixed(2)+' €');
+      bits.push(fmtDate(d.date));
+      return '<div class="card" data-id="'+d.id+'">' +
+        thumb +
+        '<div class="main">' +
+          '<div class="name">'+escapeHtml(d.name)+'</div>' +
+          (d.restaurant ? '<div class="brand">'+escapeHtml(d.restaurant)+'</div>' : '') +
+          '<div class="meta">'+bits.join(' · ')+'</div>' +
+        '</div>' +
+        '<div class="score" style="background:'+scoreBg+'">'+(d.rating!=null? d.rating.toFixed(1).replace('.0',''):'–')+'</div>' +
+      '</div>';
+    }).join('');
+    Array.prototype.forEach.call(container.querySelectorAll('.card'), function(card){
+      card.addEventListener('click', function(){ openSheet(card.dataset.id); });
+    });
+    if(currentView === 'map') renderMapView();
+    if(currentView === 'badges') renderBadges();
+    if(currentView === 'wishlist') renderWishlist();
+  }
+
+  document.getElementById('search').addEventListener('input', render);
+  document.getElementById('sortBy').addEventListener('change', render);
+  document.getElementById('filterPays').addEventListener('change', render);
+
+  /* ---------- Map view (par ville/pays) ---------- */
+  var leafletMap = null;
+  var mapMarkers = [];
+  var leafletLoadCbs = null;
+
+  function loadLeaflet(cb){
+    if(window.L){ cb(); return; }
+    if(leafletLoadCbs){ leafletLoadCbs.push(cb); return; }
+    leafletLoadCbs = [cb];
+    var link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+    document.head.appendChild(link);
+    var script = document.createElement('script');
+    script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+    script.onload = function(){
+      var cbs = leafletLoadCbs; leafletLoadCbs = null;
+      cbs.forEach(function(f){ f(); });
+    };
+    document.body.appendChild(script);
+  }
+
+  function groupByLieu(){
+    var groups = {};
+    dishes.forEach(function(d){
+      var lieu = (d.lieu||'').trim();
+      if(!lieu) return;
+      var key = lieu.toLowerCase();
+      if(!groups[key]) groups[key] = { lieu: lieu, items: [] };
+      groups[key].items.push(d);
+    });
+    return groups;
+  }
+
+  function geocodeLieu(lieu, done){
+    var key = lieu.toLowerCase();
+    var url = 'https://nominatim.openstreetmap.org/search?format=json&limit=1&q=' + encodeURIComponent(lieu);
+    fetch(url, { headers: { 'Accept-Language': 'fr' } }).then(function(r){ return r.json(); }).then(function(res){
+      var loc = (res && res[0]) ? { lat: parseFloat(res[0].lat), lon: parseFloat(res[0].lon) } : null;
+      geocache[key] = loc;
+      saveGeocache();
+      done(loc);
+    }).catch(function(){ done(null); });
+  }
+
+  function addMapMarker(key, group, coords){
+    var avg = group.items.reduce(function(s,d){return s+(d.rating||0);},0) / group.items.length;
+    var color = scoreColor(avg*10);
+    var icon = L.divIcon({
+      className: 'map-pin',
+      html: '<div style="background:'+color+';width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-family:Fredoka;font-size:12px;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.3);">'+group.items.length+'</div>',
+      iconSize:[30,30], iconAnchor:[15,15]
+    });
+    var marker = L.marker([coords.lat, coords.lon], { icon: icon }).addTo(leafletMap);
+    var names = group.items.slice(0,5).map(function(d){ return escapeHtml(d.name); }).join(', ') + (group.items.length>5 ? '…' : '');
+    marker.bindPopup('<strong>'+escapeHtml(group.lieu)+'</strong><br>'+group.items.length+' plat'+(group.items.length>1?'s':'')+' · note moy. '+avg.toFixed(1)+'<br><span style="font-size:12px;">'+names+'</span>');
+    mapMarkers.push({ key:key, marker:marker });
+  }
+
+  function renderMapPlacesList(groups, resolvedCoords){
+    var el = document.getElementById('mapPlaces');
+    var keys = Object.keys(groups).sort(function(a,b){ return groups[b].items.length - groups[a].items.length; });
+    if(!keys.length){
+      el.innerHTML = '<div class="empty"><div class="big">🗺️</div><div class="display">Aucun lieu renseigné</div>Ajoute une ville ou un pays à tes plats pour les voir ici.</div>';
+      return;
+    }
+    el.innerHTML = keys.map(function(key){
+      var g = groups[key];
+      var avg = g.items.reduce(function(s,d){return s+(d.rating||0);},0) / g.items.length;
+      return '<div class="card place-card" data-key="'+encodeURIComponent(key)+'">' +
+        '<div class="thumb">📍</div>' +
+        '<div class="main">' +
+          '<div class="name">'+escapeHtml(g.lieu)+'</div>' +
+          '<div class="meta">'+g.items.length+' plat'+(g.items.length>1?'s':'')+' · note moy. '+avg.toFixed(1)+'</div>' +
+        '</div>' +
+        '<div class="score" style="background:'+scoreColor(avg*10)+'">'+avg.toFixed(1).replace('.0','')+'</div>' +
+      '</div>';
+    }).join('');
+    Array.prototype.forEach.call(el.querySelectorAll('.place-card'), function(card){
+      card.addEventListener('click', function(){
+        var key = decodeURIComponent(card.dataset.key);
+        var coords = resolvedCoords[key];
+        if(!leafletMap || !coords) return;
+        leafletMap.setView([coords.lat, coords.lon], 11, {animate:true});
+        var m = mapMarkers.find(function(mk){ return mk.key === key; });
+        if(m) m.marker.openPopup();
+      });
+    });
+  }
+
+  function renderMapView(){
+    var groups = groupByLieu();
+    var keys = Object.keys(groups);
+    document.getElementById('mapCount').textContent = keys.length + (keys.length===1 ? ' lieu' : ' lieux');
+    loadLeaflet(function(){
+      if(!leafletMap){
+        leafletMap = L.map('mapContainer', { scrollWheelZoom:true });
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '&copy; OpenStreetMap contributors',
+          maxZoom: 18
+        }).addTo(leafletMap);
+        leafletMap.setView([20, 10], 2);
+      }
+      mapMarkers.forEach(function(m){ leafletMap.removeLayer(m.marker); });
+      mapMarkers = [];
+      var resolvedCoords = {};
+      var bounds = [];
+      keys.forEach(function(key){
+        var cached = geocache[key];
+        if(cached){
+          addMapMarker(key, groups[key], cached);
+          resolvedCoords[key] = cached;
+          bounds.push([cached.lat, cached.lon]);
+        }
+      });
+      if(bounds.length) leafletMap.fitBounds(bounds, {padding:[30,30], maxZoom:12});
+      renderMapPlacesList(groups, resolvedCoords);
+
+      var toGeocode = keys.filter(function(key){ return geocache[key] === undefined; });
+      toGeocode.forEach(function(key, i){
+        setTimeout(function(){
+          geocodeLieu(groups[key].lieu, function(loc){
+            if(loc){
+              addMapMarker(key, groups[key], loc);
+              resolvedCoords[key] = loc;
+              var allBounds = mapMarkers.map(function(m){ return m.marker.getLatLng(); }).map(function(ll){ return [ll.lat, ll.lng]; });
+              if(allBounds.length) leafletMap.fitBounds(allBounds, {padding:[30,30], maxZoom:12});
+              renderMapPlacesList(groups, resolvedCoords);
+            }
+          });
+        }, i * 1100);
+      });
+    });
+  }
+
+  Array.prototype.forEach.call(document.querySelectorAll('.view-tab'), function(btn){
+    btn.addEventListener('click', function(){
+      currentView = btn.dataset.view;
+      Array.prototype.forEach.call(document.querySelectorAll('.view-tab'), function(b){ b.classList.toggle('active', b===btn); });
+      document.getElementById('toolbar').hidden = currentView !== 'list';
+      document.getElementById('count').hidden = currentView !== 'list';
+      document.getElementById('list').hidden = currentView !== 'list';
+      document.getElementById('mapViewWrap').hidden = currentView !== 'map';
+      document.getElementById('wishViewWrap').hidden = currentView !== 'wishlist';
+      document.getElementById('badgesViewWrap').hidden = currentView !== 'badges';
+      if(currentView === 'map'){
+        renderMapView();
+        setTimeout(function(){ if(leafletMap) leafletMap.invalidateSize(); }, 60);
+      } else if(currentView === 'wishlist'){
+        renderWishlist();
+      } else if(currentView === 'badges'){
+        renderBadges();
+      }
+    });
+  });
+
+  /* ---------- PWA install ---------- */
+  var deferredPrompt = null;
+  var banner = document.getElementById('installBanner');
+  var installBtn = document.getElementById('installBtn');
+  var installTxt = document.getElementById('installTxt');
+  var isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+  var isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+  if(!isStandalone){
+    if(isIOS){
+      installTxt.textContent = "Installe l'app : appuie sur Partager, puis « Sur l'écran d'accueil ».";
+      installBtn.textContent = 'OK';
+      installBtn.addEventListener('click', function(){ banner.classList.remove('show'); });
+      banner.classList.add('show');
+    } else {
+      window.addEventListener('beforeinstallprompt', function(e){
+        e.preventDefault();
+        deferredPrompt = e;
+        banner.classList.add('show');
+      });
+      installBtn.addEventListener('click', function(){
+        if(!deferredPrompt) return;
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.finally(function(){
+          deferredPrompt = null;
+          banner.classList.remove('show');
+        });
+      });
+    }
+  }
+
+  if('serviceWorker' in navigator){
+    var swRefreshing = false;
+    navigator.serviceWorker.addEventListener('controllerchange', function(){
+      if(swRefreshing) return;
+      swRefreshing = true;
+      window.location.reload();
+    });
+    window.addEventListener('load', function(){
+      navigator.serviceWorker.register('sw.js').then(function(reg){
+        reg.update();
+      }).catch(function(){});
+    });
+  }
+
+  load();
+  render();
+})();
+</script>
+</body>
+</html>
