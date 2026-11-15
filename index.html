@@ -73,6 +73,17 @@ header.top h1 span{color:var(--ink);}
 
 .wish-actions{display:flex;gap:6px;flex-shrink:0;}
 
+.addresses-list{display:flex;flex-direction:column;gap:8px;margin-bottom:8px;}
+.address-card{
+  background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:10px 12px;
+  display:flex;align-items:center;gap:10px;
+}
+.address-card .main{flex:1;min-width:0;}
+.address-card .name{font-weight:800;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.address-card .meta{font-size:11.5px;color:var(--muted);margin-top:2px;}
+.address-card .score{width:34px;height:34px;font-size:13px;}
+.address-actions{display:flex;gap:6px;flex-shrink:0;}
+
 .badges-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
 .badge-chip{
   background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px 8px;text-align:center;
@@ -274,37 +285,51 @@ textarea{min-height:60px;resize:vertical;}
 
       <div class="row2">
         <div class="field">
-          <label for="f-restaurant">Restaurant</label>
-          <input type="text" id="f-restaurant" placeholder="Ex. Street food chez Nid">
-        </div>
-        <div class="field">
-          <label for="f-prix">Prix (€)</label>
-          <input type="number" id="f-prix" min="0" step="0.5" placeholder="Ex. 8">
-        </div>
-      </div>
-
-      <div class="field">
-        <label>Note</label>
-        <div class="rating-wrap">
-          <div class="rating-value" id="ratingValue">–</div>
-          <input type="range" id="f-rating" min="0" max="10" step="0.5" value="7">
-        </div>
-      </div>
-
-      <div class="row2">
-        <div class="field">
-          <label for="f-lieu">Lieu (où testé)</label>
-          <input type="text" id="f-lieu" placeholder="Ex. Bangkok, Thaïlande">
-        </div>
-        <div class="field">
           <label for="f-pays">Pays d'origine</label>
           <input type="text" id="f-pays" placeholder="Ex. Thaïlande">
         </div>
+        <div class="field">
+          <label for="f-date">Date</label>
+          <input type="date" id="f-date">
+        </div>
       </div>
 
       <div class="field">
-        <label for="f-date">Date</label>
-        <input type="date" id="f-date">
+        <label>Adresses</label>
+        <div class="addresses-list" id="addressesList"></div>
+        <div id="addressFormBox" hidden>
+          <div class="row2">
+            <div class="field">
+              <label for="a-restaurant">Restaurant</label>
+              <input type="text" id="a-restaurant" placeholder="Ex. Street food chez Nid">
+            </div>
+            <div class="field">
+              <label for="a-ville">Ville</label>
+              <input type="text" id="a-ville" placeholder="Ex. Bangkok">
+            </div>
+          </div>
+          <div class="row2">
+            <div class="field">
+              <label for="a-note">Note (/10)</label>
+              <input type="number" id="a-note" min="0" max="10" step="0.5" placeholder="Ex. 8">
+            </div>
+            <div class="field">
+              <label for="a-prix">Prix (€)</label>
+              <input type="number" id="a-prix" min="0" step="0.5" placeholder="Ex. 8">
+            </div>
+          </div>
+          <div class="field">
+            <label for="a-lien">Lien (site, carte, Instagram…)</label>
+            <input type="url" id="a-lien" placeholder="https://...">
+          </div>
+          <div id="addressError" style="display:none;color:var(--danger);font-size:12px;font-weight:700;margin:-6px 0 10px;">Indique au moins le restaurant ou la ville.</div>
+          <div class="actions" style="margin-top:0;">
+            <button type="button" class="btn btn-ghost" id="addressCancelBtn">Annuler</button>
+            <button type="button" class="btn btn-primary" id="addressSaveBtn">Ajouter l'adresse</button>
+          </div>
+        </div>
+        <button type="button" class="btn btn-ghost" id="addAddressBtn" style="width:100%;margin-top:6px;">+ Ajouter une adresse</button>
+        <div id="addressesError" style="display:none;color:var(--danger);font-size:12px;font-weight:700;margin-top:6px;">Ajoute au moins une adresse avant d'enregistrer.</div>
       </div>
 
       <div class="field">
@@ -533,9 +558,9 @@ import {
   function seed(){
     var today = new Date().toISOString().slice(0,10);
     return [{
-      id:'p1', name:'Pad Thaï (exemple)', restaurant:'Street food Bangkok',
-      rating:8, lieu:'Bangkok, Thaïlande', pays:'Thaïlande', prix:3.5, date:today,
-      note:"Exemple — modifie ou supprime cette entrée.", photos:[]
+      id:'p1', name:'Pad Thaï (exemple)', pays:'Thaïlande', date:today,
+      note:"Exemple — modifie ou supprime cette entrée.", photos:[],
+      addresses:[{ restaurant:'Street food Bangkok', ville:'Bangkok', note:8, prix:3.5, lien:'' }]
     }];
   }
   function uid(){ return 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
@@ -602,20 +627,10 @@ import {
     });
   }
 
-  /* ---------- Rating slider ---------- */
   document.getElementById('f-name').addEventListener('input', function(){
     document.getElementById('nameField').classList.remove('error');
     document.getElementById('nameError').style.display = 'none';
   });
-
-  var ratingInput = document.getElementById('f-rating');
-  var ratingValue = document.getElementById('ratingValue');
-  function syncRatingDisplay(){
-    var v = parseFloat(ratingInput.value);
-    ratingValue.textContent = v.toFixed(1).replace('.0','') + ' / 10';
-    ratingValue.style.color = scoreColor(v*10);
-  }
-  ratingInput.addEventListener('input', syncRatingDisplay);
 
   function scoreColor(pct){ // pct 0-100
     if(pct >= 75) return 'var(--good)';
@@ -623,6 +638,88 @@ import {
     if(pct >= 25) return 'var(--warn)';
     return 'var(--danger)';
   }
+
+  function dishAddresses(d){ return d.addresses || []; }
+  function dishAvgRating(d){
+    var rated = dishAddresses(d).filter(function(a){ return a.note != null; });
+    if(!rated.length) return null;
+    return rated.reduce(function(s,a){ return s+a.note; }, 0) / rated.length;
+  }
+
+  /* ---------- Adresses (restaurants) ---------- */
+  var pendingAddresses = [];
+  var editingAddressIndex = null;
+  var addressFormBox = document.getElementById('addressFormBox');
+
+  function renderAddressesList(){
+    var el = document.getElementById('addressesList');
+    el.innerHTML = pendingAddresses.map(function(a, i){
+      var bits = [];
+      if(a.ville) bits.push(escapeHtml(a.ville));
+      if(a.prix != null) bits.push(a.prix.toFixed(2)+' €');
+      return '<div class="address-card" data-i="'+i+'">' +
+        '<div class="main">' +
+          '<div class="name">'+escapeHtml(a.restaurant || 'Sans nom')+'</div>' +
+          (bits.length ? '<div class="meta">'+bits.join(' · ')+'</div>' : '') +
+        '</div>' +
+        (a.note != null ? '<div class="score address-card-score" style="background:'+scoreColor(a.note*10)+'">'+a.note.toFixed(1).replace('.0','')+'</div>' : '') +
+        '<div class="address-actions">' +
+          '<button type="button" class="icon-btn addr-edit" data-i="'+i+'" title="Modifier">✏️</button>' +
+          '<button type="button" class="icon-btn addr-del" data-i="'+i+'" title="Retirer">✕</button>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+    Array.prototype.forEach.call(el.querySelectorAll('.addr-edit'), function(btn){
+      btn.addEventListener('click', function(){ openAddressForm(parseInt(btn.dataset.i,10)); });
+    });
+    Array.prototype.forEach.call(el.querySelectorAll('.addr-del'), function(btn){
+      btn.addEventListener('click', function(){
+        pendingAddresses.splice(parseInt(btn.dataset.i,10), 1);
+        renderAddressesList();
+      });
+    });
+  }
+
+  function openAddressForm(index){
+    editingAddressIndex = (index != null) ? index : null;
+    var a = (index != null) ? pendingAddresses[index] : null;
+    document.getElementById('a-restaurant').value = a ? (a.restaurant || '') : '';
+    document.getElementById('a-ville').value = a ? (a.ville || '') : '';
+    document.getElementById('a-note').value = a && a.note != null ? a.note : '';
+    document.getElementById('a-prix').value = a && a.prix != null ? a.prix : '';
+    document.getElementById('a-lien').value = a ? (a.lien || '') : '';
+    document.getElementById('addressError').style.display = 'none';
+    document.getElementById('addAddressBtn').hidden = true;
+    addressFormBox.hidden = false;
+  }
+  function closeAddressForm(){
+    editingAddressIndex = null;
+    addressFormBox.hidden = true;
+    document.getElementById('addAddressBtn').hidden = false;
+  }
+  document.getElementById('addAddressBtn').addEventListener('click', function(){ openAddressForm(null); });
+  document.getElementById('addressCancelBtn').addEventListener('click', closeAddressForm);
+  document.getElementById('addressSaveBtn').addEventListener('click', function(){
+    var restaurant = document.getElementById('a-restaurant').value.trim();
+    var ville = document.getElementById('a-ville').value.trim();
+    if(!restaurant && !ville){
+      document.getElementById('addressError').style.display = 'block';
+      return;
+    }
+    var noteVal = document.getElementById('a-note').value;
+    var prixVal = document.getElementById('a-prix').value;
+    var entry = {
+      restaurant: restaurant,
+      ville: ville,
+      note: noteVal ? Math.max(0, Math.min(10, parseFloat(noteVal))) : null,
+      prix: prixVal ? parseFloat(prixVal) : null,
+      lien: document.getElementById('a-lien').value.trim()
+    };
+    if(editingAddressIndex != null) pendingAddresses[editingAddressIndex] = entry;
+    else pendingAddresses.push(entry);
+    renderAddressesList();
+    closeAddressForm();
+  });
 
   /* ---------- Sheet open/close ---------- */
   var overlay = document.getElementById('sheetOverlay');
@@ -636,12 +733,14 @@ import {
     editingId = id;
     convertingWishId = null;
     pendingPhotos = [];
+    pendingAddresses = [];
     isSubmitting = false;
     document.getElementById('dishForm').reset();
     document.getElementById('f-date').value = new Date().toISOString().slice(0,10);
-    ratingInput.value = 7; syncRatingDisplay();
     document.getElementById('nameField').classList.remove('error');
     document.getElementById('nameError').style.display = 'none';
+    document.getElementById('addressesError').style.display = 'none';
+    closeAddressForm();
 
     if(id){
       var d = dishes.find(function(x){ return x.id === id; });
@@ -649,20 +748,18 @@ import {
       document.getElementById('submitBtn').textContent = 'Enregistrer';
       document.getElementById('deleteBtn').hidden = false;
       document.getElementById('f-name').value = d.name;
-      document.getElementById('f-restaurant').value = d.restaurant || '';
-      ratingInput.value = d.rating; syncRatingDisplay();
-      document.getElementById('f-lieu').value = d.lieu || '';
       document.getElementById('f-pays').value = d.pays || '';
-      document.getElementById('f-prix').value = d.prix ?? '';
       document.getElementById('f-date').value = d.date || new Date().toISOString().slice(0,10);
       document.getElementById('f-note').value = d.note || '';
       pendingPhotos = (d.photos || []).slice();
+      pendingAddresses = (d.addresses || []).slice();
     } else {
       document.getElementById('sheetTitle').textContent = 'Nouveau plat';
       document.getElementById('submitBtn').textContent = 'Ajouter';
       document.getElementById('deleteBtn').hidden = true;
     }
     renderPhotosRow();
+    renderAddressesList();
     overlay.hidden = false;
   }
   function closeSheet(){
@@ -675,7 +772,10 @@ import {
     convertingWishId = id;
     document.getElementById('sheetTitle').textContent = 'Tu l\'as testé !';
     document.getElementById('f-name').value = w.name;
-    document.getElementById('f-restaurant').value = w.restaurant || '';
+    if(w.restaurant){
+      pendingAddresses = [{ restaurant: w.restaurant, ville:'', note:null, prix:null, lien:'' }];
+      renderAddressesList();
+    }
   }
 
   document.getElementById('deleteBtn').addEventListener('click', function(){
@@ -702,18 +802,21 @@ import {
     }
     nameField.classList.remove('error');
     document.getElementById('nameError').style.display = 'none';
+    if(!pendingAddresses.length){
+      document.getElementById('addressesError').style.display = 'block';
+      document.getElementById('addressesError').scrollIntoView({behavior:'smooth', block:'center'});
+      return;
+    }
+    document.getElementById('addressesError').style.display = 'none';
     isSubmitting = true;
     var entry = {
       id: editingId || uid(),
       name: name,
-      restaurant: document.getElementById('f-restaurant').value.trim(),
-      rating: parseFloat(ratingInput.value),
-      lieu: document.getElementById('f-lieu').value.trim(),
       pays: document.getElementById('f-pays').value.trim(),
-      prix: document.getElementById('f-prix').value ? parseFloat(document.getElementById('f-prix').value) : null,
       date: document.getElementById('f-date').value || new Date().toISOString().slice(0,10),
       note: document.getElementById('f-note').value.trim(),
-      photos: pendingPhotos.slice()
+      photos: pendingPhotos.slice(),
+      addresses: pendingAddresses.slice()
     };
     upsertDish(entry);
     if(!editingId && convertingWishId){
@@ -812,20 +915,22 @@ import {
     { icon:'⭐', label:'Un coup de cœur (10/10)', check: function(s){ return s.hasMaxRating; } },
     { icon:'📸', label:'10 photos prises', check: function(s){ return s.photoCount >= 10; } },
     { icon:'🗓️', label:'7 jours de dégustation', check: function(s){ return s.distinctDays >= 7; } },
-    { icon:'🏆', label:'Moyenne ≥ 8 (5 plats min.)', check: function(s){ return s.total >= 5 && s.avg >= 8; } }
+    { icon:'🏆', label:'Moyenne ≥ 8 (5 dégustations min.)', check: function(s){ return s.ratedCount >= 5 && s.avg >= 8; } }
   ];
 
   function computeStats(){
     var countries = {}, places = {}, restaurants = {}, days = {};
-    var hasMaxRating = false, photoCount = 0, sumRating = 0;
+    var hasMaxRating = false, photoCount = 0, sumRating = 0, ratedCount = 0;
     dishes.forEach(function(d){
       if(d.pays) countries[d.pays.trim().toLowerCase()] = true;
-      if(d.lieu) places[d.lieu.trim().toLowerCase()] = true;
-      if(d.restaurant) restaurants[d.restaurant.trim().toLowerCase()] = true;
       if(d.date) days[d.date] = true;
-      if(d.rating === 10) hasMaxRating = true;
       photoCount += (d.photos ? d.photos.length : 0);
-      sumRating += (d.rating || 0);
+      dishAddresses(d).forEach(function(a){
+        if(a.ville) places[a.ville.trim().toLowerCase()] = true;
+        if(a.restaurant) restaurants[a.restaurant.trim().toLowerCase()] = true;
+        if(a.note === 10) hasMaxRating = true;
+        if(a.note != null){ sumRating += a.note; ratedCount++; }
+      });
     });
     var total = dishes.length;
     return {
@@ -836,7 +941,8 @@ import {
       distinctDays: Object.keys(days).length,
       hasMaxRating: hasMaxRating,
       photoCount: photoCount,
-      avg: total ? sumRating/total : 0
+      ratedCount: ratedCount,
+      avg: ratedCount ? sumRating/ratedCount : 0
     };
   }
 
@@ -859,12 +965,12 @@ import {
   function renderStats(){
     var el = document.getElementById('stats');
     var total = dishes.length;
-    var avg = total ? (dishes.reduce(function(s,d){return s + (d.rating||0);},0) / total) : 0;
+    var s = computeStats();
     var countries = {};
     dishes.forEach(function(d){ if(d.pays) countries[d.pays.trim().toLowerCase()] = true; });
     el.innerHTML =
       '<div class="stat"><div class="num">' + total + '</div><div class="label">Plats testés</div></div>' +
-      '<div class="stat"><div class="num">' + (total ? avg.toFixed(1) : '–') + '</div><div class="label">Note moyenne /10</div></div>' +
+      '<div class="stat"><div class="num">' + (s.ratedCount ? s.avg.toFixed(1) : '–') + '</div><div class="label">Note moyenne /10</div></div>' +
       '<div class="stat"><div class="num">' + Object.keys(countries).length + '</div><div class="label">Pays différents</div></div>';
   }
 
@@ -887,14 +993,24 @@ import {
     var list = dishes.filter(function(d){
       if(paysFilter && (d.pays||'') !== paysFilter) return false;
       if(!q) return true;
-      var hay = (d.name+' '+(d.restaurant||'')+' '+(d.lieu||'')+' '+(d.pays||'')+' '+(d.note||'')).toLowerCase();
+      var addrText = dishAddresses(d).map(function(a){ return (a.restaurant||'')+' '+(a.ville||''); }).join(' ');
+      var hay = (d.name+' '+addrText+' '+(d.pays||'')+' '+(d.note||'')).toLowerCase();
       return hay.indexOf(q) !== -1;
     });
     list.sort(function(a,b){
+      var ra = dishAvgRating(a), rb = dishAvgRating(b);
       switch(sort){
         case 'date-asc': return a.date.localeCompare(b.date);
-        case 'rating-desc': return (b.rating||0)-(a.rating||0);
-        case 'rating-asc': return (a.rating||0)-(b.rating||0);
+        case 'rating-desc':
+          if(ra==null && rb==null) return 0;
+          if(ra==null) return 1;
+          if(rb==null) return -1;
+          return rb-ra;
+        case 'rating-asc':
+          if(ra==null && rb==null) return 0;
+          if(ra==null) return 1;
+          if(rb==null) return -1;
+          return ra-rb;
         case 'name-asc': return a.name.localeCompare(b.name,'fr');
         default: return b.date.localeCompare(a.date);
       }
@@ -925,20 +1041,22 @@ import {
     }
     container.innerHTML = list.map(function(d){
       var thumb = d.photos && d.photos[0] ? '<img class="thumb" src="'+d.photos[0]+'">' : '<div class="thumb">🍽️</div>';
-      var scoreBg = scoreColor((d.rating||0)*10);
+      var avg = dishAvgRating(d);
+      var scoreBg = scoreColor((avg||0)*10);
+      var addrs = dishAddresses(d);
+      var subtitle = addrs.length === 1 ? addrs[0].restaurant : (addrs.length ? addrs.length+' restaurants' : '');
       var bits = [];
-      if(d.lieu) bits.push('📍 '+escapeHtml(d.lieu));
       if(d.pays) bits.push('🌍 '+escapeHtml(d.pays));
-      if(d.prix != null) bits.push(d.prix.toFixed(2)+' €');
+      if(addrs.length === 1 && addrs[0].ville) bits.push('📍 '+escapeHtml(addrs[0].ville));
       bits.push(fmtDate(d.date));
       return '<div class="card" data-id="'+d.id+'">' +
         thumb +
         '<div class="main">' +
           '<div class="name">'+escapeHtml(d.name)+'</div>' +
-          (d.restaurant ? '<div class="brand">'+escapeHtml(d.restaurant)+'</div>' : '') +
+          (subtitle ? '<div class="brand">'+escapeHtml(subtitle)+'</div>' : '') +
           '<div class="meta">'+bits.join(' · ')+'</div>' +
         '</div>' +
-        '<div class="score" style="background:'+scoreBg+'">'+(d.rating!=null? d.rating.toFixed(1).replace('.0',''):'–')+'</div>' +
+        '<div class="score" style="background:'+scoreBg+'">'+(avg!=null? avg.toFixed(1).replace('.0',''):'–')+'</div>' +
       '</div>';
     }).join('');
     Array.prototype.forEach.call(container.querySelectorAll('.card'), function(card){
@@ -975,14 +1093,16 @@ import {
     document.body.appendChild(script);
   }
 
-  function groupByLieu(){
+  function groupByVille(){
     var groups = {};
     dishes.forEach(function(d){
-      var lieu = (d.lieu||'').trim();
-      if(!lieu) return;
-      var key = lieu.toLowerCase();
-      if(!groups[key]) groups[key] = { lieu: lieu, items: [] };
-      groups[key].items.push(d);
+      dishAddresses(d).forEach(function(a){
+        var ville = (a.ville||'').trim();
+        if(!ville) return;
+        var key = ville.toLowerCase();
+        if(!groups[key]) groups[key] = { ville: ville, items: [] };
+        groups[key].items.push({ dishName: d.name, restaurant: a.restaurant, note: a.note });
+      });
     });
     return groups;
   }
@@ -999,16 +1119,17 @@ import {
   }
 
   function addMapMarker(key, group, coords){
-    var avg = group.items.reduce(function(s,d){return s+(d.rating||0);},0) / group.items.length;
-    var color = scoreColor(avg*10);
+    var rated = group.items.filter(function(it){ return it.note != null; });
+    var avg = rated.length ? rated.reduce(function(s,it){return s+it.note;},0) / rated.length : null;
+    var color = scoreColor((avg||0)*10);
     var icon = L.divIcon({
       className: 'map-pin',
       html: '<div style="background:'+color+';width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-family:Fredoka;font-size:12px;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.3);">'+group.items.length+'</div>',
       iconSize:[30,30], iconAnchor:[15,15]
     });
     var marker = L.marker([coords.lat, coords.lon], { icon: icon }).addTo(leafletMap);
-    var names = group.items.slice(0,5).map(function(d){ return escapeHtml(d.name); }).join(', ') + (group.items.length>5 ? '…' : '');
-    marker.bindPopup('<strong>'+escapeHtml(group.lieu)+'</strong><br>'+group.items.length+' plat'+(group.items.length>1?'s':'')+' · note moy. '+avg.toFixed(1)+'<br><span style="font-size:12px;">'+names+'</span>');
+    var names = group.items.slice(0,5).map(function(it){ return escapeHtml(it.dishName + (it.restaurant ? ' @ '+it.restaurant : '')); }).join(', ') + (group.items.length>5 ? '…' : '');
+    marker.bindPopup('<strong>'+escapeHtml(group.ville)+'</strong><br>'+group.items.length+' dégustation'+(group.items.length>1?'s':'')+(avg!=null?' · note moy. '+avg.toFixed(1):'')+'<br><span style="font-size:12px;">'+names+'</span>');
     mapMarkers.push({ key:key, marker:marker });
   }
 
@@ -1016,19 +1137,20 @@ import {
     var el = document.getElementById('mapPlaces');
     var keys = Object.keys(groups).sort(function(a,b){ return groups[b].items.length - groups[a].items.length; });
     if(!keys.length){
-      el.innerHTML = '<div class="empty"><div class="big">🗺️</div><div class="display">Aucun lieu renseigné</div>Ajoute une ville ou un pays à tes plats pour les voir ici.</div>';
+      el.innerHTML = '<div class="empty"><div class="big">🗺️</div><div class="display">Aucune adresse renseignée</div>Ajoute une adresse à un de tes plats pour la voir ici.</div>';
       return;
     }
     el.innerHTML = keys.map(function(key){
       var g = groups[key];
-      var avg = g.items.reduce(function(s,d){return s+(d.rating||0);},0) / g.items.length;
+      var rated = g.items.filter(function(it){ return it.note != null; });
+      var avg = rated.length ? rated.reduce(function(s,it){return s+it.note;},0) / rated.length : null;
       return '<div class="card place-card" data-key="'+encodeURIComponent(key)+'">' +
         '<div class="thumb">📍</div>' +
         '<div class="main">' +
-          '<div class="name">'+escapeHtml(g.lieu)+'</div>' +
-          '<div class="meta">'+g.items.length+' plat'+(g.items.length>1?'s':'')+' · note moy. '+avg.toFixed(1)+'</div>' +
+          '<div class="name">'+escapeHtml(g.ville)+'</div>' +
+          '<div class="meta">'+g.items.length+' dégustation'+(g.items.length>1?'s':'')+(avg!=null?' · note moy. '+avg.toFixed(1):'')+'</div>' +
         '</div>' +
-        '<div class="score" style="background:'+scoreColor(avg*10)+'">'+avg.toFixed(1).replace('.0','')+'</div>' +
+        '<div class="score" style="background:'+scoreColor((avg||0)*10)+'">'+(avg!=null?avg.toFixed(1).replace('.0',''):'–')+'</div>' +
       '</div>';
     }).join('');
     Array.prototype.forEach.call(el.querySelectorAll('.place-card'), function(card){
@@ -1044,7 +1166,7 @@ import {
   }
 
   function renderMapView(){
-    var groups = groupByLieu();
+    var groups = groupByVille();
     var keys = Object.keys(groups);
     document.getElementById('mapCount').textContent = keys.length + (keys.length===1 ? ' lieu' : ' lieux');
     loadLeaflet(function(){
@@ -1074,7 +1196,7 @@ import {
       var toGeocode = keys.filter(function(key){ return geocache[key] === undefined; });
       toGeocode.forEach(function(key, i){
         setTimeout(function(){
-          geocodeLieu(groups[key].lieu, function(loc){
+          geocodeLieu(groups[key].ville, function(loc){
             if(loc){
               addMapMarker(key, groups[key], loc);
               resolvedCoords[key] = loc;
