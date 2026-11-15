@@ -192,6 +192,12 @@ input[type=range]{width:100%;accent-color:var(--orange-deep);height:8px;}
 .install-banner button{background:var(--teal);color:#fff;border:none;border-radius:10px;padding:8px 12px;font-weight:700;font-size:12.5px;}
 
 textarea{min-height:60px;resize:vertical;}
+.pac-container{z-index:10000!important;}
+gmp-place-autocomplete{
+  width:100%; display:block;
+  background-color:var(--surface); border:2px solid var(--line); border-radius:12px;
+  color:var(--ink); font-family:'Nunito',sans-serif; font-size:15px;
+}
 [hidden]{display:none!important;}
 </style>
 </head>
@@ -309,7 +315,9 @@ textarea{min-height:60px;resize:vertical;}
           <div class="row2">
             <div class="field">
               <label for="a-restaurant">Restaurant</label>
-              <input type="text" id="a-restaurant" placeholder="Ex. Street food chez Nid">
+              <div id="a-restaurant-wrap">
+                <input type="text" id="a-restaurant" placeholder="Ex. Street food chez Nid">
+              </div>
             </div>
             <div class="field">
               <label for="a-ville">Ville</label>
@@ -669,6 +677,10 @@ import {
   function googleMapsSearchUrl(query){
     return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(query);
   }
+  function openExternalLink(url){
+    var w = window.open(url, '_blank');
+    if(!w) window.location.href = url;
+  }
 
   function renderAddressesList(){
     var el = document.getElementById('addressesList');
@@ -676,6 +688,7 @@ import {
       var bits = [];
       if(a.ville) bits.push(escapeHtml(a.ville));
       if(a.prix != null) bits.push(a.prix.toFixed(2)+' €');
+      if(a.lien) bits.push('🗺️ Carte');
       if(a.commentaire) bits.push(escapeHtml(a.commentaire));
       return '<div class="address-card" data-i="'+i+'">' +
         '<div class="main">' +
@@ -684,12 +697,18 @@ import {
         '</div>' +
         (a.note != null ? '<div class="score address-card-score" style="background:'+scoreColor(a.note*10)+'">'+a.note.toFixed(1).replace('.0','')+'</div>' : '') +
         '<div class="address-actions">' +
-          (a.lien ? '<a class="icon-btn" href="'+escapeHtml(a.lien)+'" target="_blank" rel="noopener" title="Voir sur la carte">🗺️</a>' : '') +
+          (a.lien ? '<button type="button" class="icon-btn addr-maps" data-i="'+i+'" title="Voir sur la carte">🗺️</button>' : '') +
           '<button type="button" class="icon-btn addr-edit" data-i="'+i+'" title="Modifier">✏️</button>' +
           '<button type="button" class="icon-btn addr-del" data-i="'+i+'" title="Retirer">✕</button>' +
         '</div>' +
       '</div>';
     }).join('');
+    Array.prototype.forEach.call(el.querySelectorAll('.addr-maps'), function(btn){
+      btn.addEventListener('click', function(){
+        var a = pendingAddresses[parseInt(btn.dataset.i,10)];
+        if(a && a.lien) openExternalLink(a.lien);
+      });
+    });
     Array.prototype.forEach.call(el.querySelectorAll('.addr-edit'), function(btn){
       btn.addEventListener('click', function(){ openAddressForm(parseInt(btn.dataset.i,10)); });
     });
@@ -698,6 +717,53 @@ import {
         pendingAddresses.splice(parseInt(btn.dataset.i,10), 1);
         renderAddressesList();
       });
+    });
+  }
+
+  var GOOGLE_MAPS_API_KEY = 'AIzaSyDieGcNIWk1Fyi-Cpeo8m03cBX8hkyNkGI';
+  var googleMapsLoadCbs = null;
+  function loadGoogleMaps(cb){
+    if(window.google && window.google.maps && window.google.maps.places){ cb(); return; }
+    if(googleMapsLoadCbs){ googleMapsLoadCbs.push(cb); return; }
+    googleMapsLoadCbs = [cb];
+    window.__onGoogleMapsLoaded = function(){
+      var cbs = googleMapsLoadCbs; googleMapsLoadCbs = null;
+      cbs.forEach(function(f){ f(); });
+    };
+    var script = document.createElement('script');
+    script.src = 'https://maps.googleapis.com/maps/api/js?key=' + GOOGLE_MAPS_API_KEY + '&libraries=places&callback=__onGoogleMapsLoaded&loading=async';
+    document.head.appendChild(script);
+  }
+
+  function placeCityComponent(components){
+    if(!components) return '';
+    function byType(type){
+      var c = components.find(function(comp){ return comp.types.indexOf(type) !== -1; });
+      return c ? c.longText : '';
+    }
+    return byType('locality') || byType('postal_town') || byType('administrative_area_level_2') || byType('administrative_area_level_1') || '';
+  }
+
+  var placeAutocompleteEl = null;
+  function setupRestaurantAutocomplete(){
+    if(placeAutocompleteEl) return;
+    if(!(window.google && google.maps && google.maps.places && google.maps.places.PlaceAutocompleteElement)) return;
+    var wrap = document.getElementById('a-restaurant-wrap');
+    var oldInput = document.getElementById('a-restaurant');
+    placeAutocompleteEl = new google.maps.places.PlaceAutocompleteElement({
+      includedPrimaryTypes: ['restaurant']
+    });
+    placeAutocompleteEl.id = 'a-restaurant';
+    if(oldInput.value) placeAutocompleteEl.value = oldInput.value;
+    wrap.replaceChild(placeAutocompleteEl, oldInput);
+    placeAutocompleteEl.addEventListener('gmp-select', function(event){
+      var place = event.placePrediction.toPlace();
+      place.fetchFields({ fields: ['displayName', 'googleMapsURI', 'addressComponents'] }).then(function(){
+        if(place.displayName) placeAutocompleteEl.value = place.displayName;
+        document.getElementById('a-lien').value = place.googleMapsURI || ('https://www.google.com/maps/place/?q=place_id:' + place.id);
+        var city = placeCityComponent(place.addressComponents);
+        if(city) document.getElementById('a-ville').value = city;
+      }).catch(function(){ /* la fiche détaillée n'a pas pu être récupérée */ });
     });
   }
 
@@ -712,6 +778,7 @@ import {
     document.getElementById('a-commentaire').value = a ? (a.commentaire || '') : '';
     document.getElementById('addressError').style.display = 'none';
     document.getElementById('addAddressBtn').hidden = true;
+    loadGoogleMaps(setupRestaurantAutocomplete);
     addressFormBox.hidden = false;
   }
   function closeAddressForm(){
