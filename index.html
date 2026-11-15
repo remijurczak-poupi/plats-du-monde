@@ -283,6 +283,14 @@ textarea{min-height:60px;resize:vertical;}
         <div id="nameError" style="display:none;color:var(--danger);font-size:12px;font-weight:700;">Donne un nom à ce plat avant d'enregistrer.</div>
       </div>
 
+      <div class="field">
+        <label>Note globale</label>
+        <div class="rating-wrap">
+          <div class="rating-value" id="ratingValue">–</div>
+          <input type="range" id="f-rating" min="0" max="10" step="0.5" value="7">
+        </div>
+      </div>
+
       <div class="row2">
         <div class="field">
           <label for="f-pays">Pays d'origine</label>
@@ -295,7 +303,7 @@ textarea{min-height:60px;resize:vertical;}
       </div>
 
       <div class="field">
-        <label>Adresses</label>
+        <label>Adresses (optionnel)</label>
         <div class="addresses-list" id="addressesList"></div>
         <div id="addressFormBox" hidden>
           <div class="row2">
@@ -333,7 +341,6 @@ textarea{min-height:60px;resize:vertical;}
           </div>
         </div>
         <button type="button" class="btn btn-ghost" id="addAddressBtn" style="width:100%;margin-top:6px;">+ Ajouter une adresse</button>
-        <div id="addressesError" style="display:none;color:var(--danger);font-size:12px;font-weight:700;margin-top:6px;">Ajoute au moins une adresse avant d'enregistrer.</div>
       </div>
 
       <div class="field">
@@ -562,7 +569,7 @@ import {
   function seed(){
     var today = new Date().toISOString().slice(0,10);
     return [{
-      id:'p1', name:'Pad Thaï (exemple)', pays:'Thaïlande', date:today,
+      id:'p1', name:'Pad Thaï (exemple)', rating:8, pays:'Thaïlande', date:today,
       note:"Exemple — modifie ou supprime cette entrée.", photos:[],
       addresses:[{ restaurant:'Street food Bangkok', ville:'Bangkok', note:8, prix:3.5, lien:'' }]
     }];
@@ -644,11 +651,15 @@ import {
   }
 
   function dishAddresses(d){ return d.addresses || []; }
-  function dishAvgRating(d){
-    var rated = dishAddresses(d).filter(function(a){ return a.note != null; });
-    if(!rated.length) return null;
-    return rated.reduce(function(s,a){ return s+a.note; }, 0) / rated.length;
+
+  var ratingInput = document.getElementById('f-rating');
+  var ratingValue = document.getElementById('ratingValue');
+  function syncRatingDisplay(){
+    var v = parseFloat(ratingInput.value);
+    ratingValue.textContent = v.toFixed(1).replace('.0','') + ' / 10';
+    ratingValue.style.color = scoreColor(v*10);
   }
+  ratingInput.addEventListener('input', syncRatingDisplay);
 
   /* ---------- Adresses (restaurants) ---------- */
   var pendingAddresses = [];
@@ -751,9 +762,9 @@ import {
     isSubmitting = false;
     document.getElementById('dishForm').reset();
     document.getElementById('f-date').value = new Date().toISOString().slice(0,10);
+    ratingInput.value = 7; syncRatingDisplay();
     document.getElementById('nameField').classList.remove('error');
     document.getElementById('nameError').style.display = 'none';
-    document.getElementById('addressesError').style.display = 'none';
     closeAddressForm();
 
     if(id){
@@ -762,6 +773,7 @@ import {
       document.getElementById('submitBtn').textContent = 'Enregistrer';
       document.getElementById('deleteBtn').hidden = false;
       document.getElementById('f-name').value = d.name;
+      ratingInput.value = d.rating != null ? d.rating : 7; syncRatingDisplay();
       document.getElementById('f-pays').value = d.pays || '';
       document.getElementById('f-date').value = d.date || new Date().toISOString().slice(0,10);
       document.getElementById('f-note').value = d.note || '';
@@ -816,16 +828,11 @@ import {
     }
     nameField.classList.remove('error');
     document.getElementById('nameError').style.display = 'none';
-    if(!pendingAddresses.length){
-      document.getElementById('addressesError').style.display = 'block';
-      document.getElementById('addressesError').scrollIntoView({behavior:'smooth', block:'center'});
-      return;
-    }
-    document.getElementById('addressesError').style.display = 'none';
     isSubmitting = true;
     var entry = {
       id: editingId || uid(),
       name: name,
+      rating: parseFloat(ratingInput.value),
       pays: document.getElementById('f-pays').value.trim(),
       date: document.getElementById('f-date').value || new Date().toISOString().slice(0,10),
       note: document.getElementById('f-note').value.trim(),
@@ -929,7 +936,7 @@ import {
     { icon:'⭐', label:'Un coup de cœur (10/10)', check: function(s){ return s.hasMaxRating; } },
     { icon:'📸', label:'10 photos prises', check: function(s){ return s.photoCount >= 10; } },
     { icon:'🗓️', label:'7 jours de dégustation', check: function(s){ return s.distinctDays >= 7; } },
-    { icon:'🏆', label:'Moyenne ≥ 8 (5 dégustations min.)', check: function(s){ return s.ratedCount >= 5 && s.avg >= 8; } }
+    { icon:'🏆', label:'Moyenne ≥ 8 (5 plats min.)', check: function(s){ return s.ratedCount >= 5 && s.avg >= 8; } }
   ];
 
   function computeStats(){
@@ -939,11 +946,10 @@ import {
       if(d.pays) countries[d.pays.trim().toLowerCase()] = true;
       if(d.date) days[d.date] = true;
       photoCount += (d.photos ? d.photos.length : 0);
+      if(d.rating != null){ sumRating += d.rating; ratedCount++; if(d.rating === 10) hasMaxRating = true; }
       dishAddresses(d).forEach(function(a){
         if(a.ville) places[a.ville.trim().toLowerCase()] = true;
         if(a.restaurant) restaurants[a.restaurant.trim().toLowerCase()] = true;
-        if(a.note === 10) hasMaxRating = true;
-        if(a.note != null){ sumRating += a.note; ratedCount++; }
       });
     });
     var total = dishes.length;
@@ -1012,19 +1018,10 @@ import {
       return hay.indexOf(q) !== -1;
     });
     list.sort(function(a,b){
-      var ra = dishAvgRating(a), rb = dishAvgRating(b);
       switch(sort){
         case 'date-asc': return a.date.localeCompare(b.date);
-        case 'rating-desc':
-          if(ra==null && rb==null) return 0;
-          if(ra==null) return 1;
-          if(rb==null) return -1;
-          return rb-ra;
-        case 'rating-asc':
-          if(ra==null && rb==null) return 0;
-          if(ra==null) return 1;
-          if(rb==null) return -1;
-          return ra-rb;
+        case 'rating-desc': return (b.rating||0)-(a.rating||0);
+        case 'rating-asc': return (a.rating||0)-(b.rating||0);
         case 'name-asc': return a.name.localeCompare(b.name,'fr');
         default: return b.date.localeCompare(a.date);
       }
@@ -1055,8 +1052,7 @@ import {
     }
     container.innerHTML = list.map(function(d){
       var thumb = d.photos && d.photos[0] ? '<img class="thumb" src="'+d.photos[0]+'">' : '<div class="thumb">🍽️</div>';
-      var avg = dishAvgRating(d);
-      var scoreBg = scoreColor((avg||0)*10);
+      var scoreBg = scoreColor((d.rating||0)*10);
       var addrs = dishAddresses(d);
       var subtitle = addrs.length === 1 ? addrs[0].restaurant : (addrs.length ? addrs.length+' restaurants' : '');
       var bits = [];
@@ -1070,7 +1066,7 @@ import {
           (subtitle ? '<div class="brand">'+escapeHtml(subtitle)+'</div>' : '') +
           '<div class="meta">'+bits.join(' · ')+'</div>' +
         '</div>' +
-        '<div class="score" style="background:'+scoreBg+'">'+(avg!=null? avg.toFixed(1).replace('.0',''):'–')+'</div>' +
+        '<div class="score" style="background:'+scoreBg+'">'+(d.rating!=null? d.rating.toFixed(1).replace('.0',''):'–')+'</div>' +
       '</div>';
     }).join('');
     Array.prototype.forEach.call(container.querySelectorAll('.card'), function(card){
